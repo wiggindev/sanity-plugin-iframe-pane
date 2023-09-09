@@ -12,4 +12,4 @@ export {
   type IframeSizeKey,
   type UrlSecretId,
 } from './Iframe'
-export type {Size, SizeProps} from './types'
+export type {MissingSlug, Size, SizeProps} from './types'
