@@ -67,6 +67,8 @@ export function Iframe(props: IframeProps) {
   }, [])
 
   const prefersReducedMotion = usePrefersReducedMotion()
+
+  const [urlSecret, setUrlSecret] = useState<null | string>(null)
   const [urlState, setUrlState] = useState<UrlState>(() => (typeof url === 'function' ? '' : url))
 
   const [loading, setLoading] = useState(true)
@@ -101,6 +103,7 @@ export function Iframe(props: IframeProps) {
           showDisplayUrl={showDisplayUrl}
           reloadButton={!!reload?.button}
           handleReload={handleReload}
+          urlSecret={urlSecret}
         />
         {urlState === MissingSlug && !workaroundEmptyDocument ? (
           <MissingSlugScreen />
@@ -119,6 +122,14 @@ export function Iframe(props: IframeProps) {
             />
           </Card>
         )}
+        {urlSecretId && (
+          <GetUrlSecret
+            urlSecretId={urlSecretId}
+            urlSecret={urlSecret}
+            setUrlSecret={setUrlSecret}
+            setError={setError}
+          />
+        )}
         {typeof url === 'function' && (
           <AsyncUrl
             // We use the revision as a key, to force a re-render when the revision changes
@@ -127,7 +138,7 @@ export function Iframe(props: IframeProps) {
             key={deferredRevision}
             url={url}
             displayed={displayed}
-            urlSecretId={urlSecretId}
+            urlSecret={urlSecret}
             setDisplayUrl={setUrlState}
             setError={setError}
           />
@@ -274,21 +285,18 @@ function ReloadOnRevision(props: ReloadOnRevisionProps) {
 interface AsyncUrlProps {
   displayed: SanityDocument
   url: UrlResolver
-  urlSecretId?: UrlSecretId
+  urlSecret: string | null
   setDisplayUrl: (url: UrlState) => void
   setError: SetError
 }
 function AsyncUrl(props: AsyncUrlProps) {
-  const {urlSecretId, setDisplayUrl, setError} = props
+  const {setDisplayUrl, setError, urlSecret} = props
   // Snapshot values we only care about when the revision changes, done by changing the `key` prop
   const [displayed] = useState(props.displayed)
   const [url] = useState(() => props.url)
-  const [urlSecret, setUrlSecret] = useState<null | string>(null)
 
   // Set initial URL and refresh on new revisions
   useEffect(() => {
-    if (urlSecretId && !urlSecret) return
-
     const getUrl = async (signal: AbortSignal) => {
       const resolveUrl = await url(displayed, urlSecret, abort.signal)
 
@@ -302,18 +310,7 @@ function AsyncUrl(props: AsyncUrlProps) {
     getUrl(abort.signal).catch((error) => error.name !== 'AbortError' && setError(error))
     // eslint-disable-next-line consistent-return
     return () => abort.abort()
-  }, [displayed, setDisplayUrl, setError, url, urlSecret, urlSecretId])
-
-  if (urlSecretId) {
-    return (
-      <GetUrlSecret
-        urlSecretId={urlSecretId}
-        urlSecret={urlSecret}
-        setUrlSecret={setUrlSecret}
-        setError={setError}
-      />
-    )
-  }
+  }, [displayed, setDisplayUrl, setError, url, urlSecret])
 
   return null
 }

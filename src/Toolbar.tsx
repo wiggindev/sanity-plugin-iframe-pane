@@ -28,6 +28,7 @@ export interface ToolbarProps {
   reloading: boolean
   reloadButton: boolean
   handleReload: () => void
+  urlSecret: string | null
 }
 export function Toolbar(props: ToolbarProps) {
   const {
@@ -38,11 +39,14 @@ export function Toolbar(props: ToolbarProps) {
     showDisplayUrl,
     reloadButton,
     handleReload,
+    urlSecret,
   } = props
 
   const input = useRef<HTMLTextAreaElement>(null)
   const {push: pushToast} = useToast()
   const [, copy] = useCopyToClipboard()
+
+  const cleanUrl = urlSecret ? displayUrl.replaceAll(urlSecret, '***') : displayUrl
 
   return (
     <>
@@ -75,9 +79,7 @@ export function Toolbar(props: ToolbarProps) {
               />
             </Tooltip>
           </Flex>
-          <Box flex={1}>
-            {showDisplayUrl && displayUrl && <DisplayUrl displayUrl={displayUrl} />}
-          </Box>
+          <Box flex={1}>{showDisplayUrl && displayUrl && <DisplayUrl displayUrl={cleanUrl} />}</Box>
           <Flex align="center" gap={1}>
             {reloadButton ? (
               <Tooltip
